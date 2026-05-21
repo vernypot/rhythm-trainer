@@ -1,131 +1,131 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import './App.css';
 
-// ═══════════════════════════════════════════════════════════════
-// NOTE DEFINITIONS
-// Each figure has: id, label, beats (in quarter-note units),
-// subdivisions (how many snare hits it generates relative to 1 beat),
-// and an SVG renderer key.
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// FIGURES — values in quarter-note units
+// ═══════════════════════════════════════════════════════════════════════
 const FIGURES = {
-  whole:        { id:'whole',        label:'Redonda',     beats:4,    svg:'whole'      },
-  half:         { id:'half',         label:'Blanca',      beats:2,    svg:'half'       },
-  quarter:      { id:'quarter',      label:'Negra',       beats:1,    svg:'quarter'    },
-  eighth:       { id:'eighth',       label:'Corchea',     beats:0.5,  svg:'eighth'     },
-  sixteenth:    { id:'sixteenth',    label:'Semicorchea', beats:0.25, svg:'sixteenth'  },
-  quarter_rest: { id:'quarter_rest', label:'Silencio ♩',  beats:1,    svg:'qrest'      },
-  eighth_rest:  { id:'eighth_rest',  label:'Silencio ♪',  beats:0.5,  svg:'erest'      },
+  whole:        { id:'whole',        label:'Redonda',     beats:4,    svg:'whole'  },
+  half:         { id:'half',         label:'Blanca',      beats:2,    svg:'half'   },
+  quarter:      { id:'quarter',      label:'Negra',       beats:1,    svg:'quarter'},
+  eighth:       { id:'eighth',       label:'Corchea',     beats:0.5,  svg:'eighth' },
+  sixteenth:    { id:'sixteenth',    label:'Semicorchea', beats:0.25, svg:'sixteenth'},
+  quarter_rest: { id:'quarter_rest', label:'Silencio ♩',  beats:1,    svg:'qrest'  },
+  eighth_rest:  { id:'eighth_rest',  label:'Silencio ♪',  beats:0.5,  svg:'erest'  },
 };
 
-// Figure icon groups for palette
 const PALETTE_GROUPS = [
-  { label:'Figuras', items:['whole','half','quarter','eighth','sixteenth'] },
+  { label:'Figuras',   items:['whole','half','quarter','eighth','sixteenth'] },
   { label:'Silencios', items:['quarter_rest','eighth_rest'] },
 ];
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
 // SVG NOTE RENDERERS
-// ═══════════════════════════════════════════════════════════════
-function NoteSVG({ type, size=64, color='#1a1a1a', highlight=false }) {
-  const c = highlight ? '#000' : color;
-  const w = size, h = size;
-  const vb = '0 0 60 70';
-  const props = { width:w, height:h, viewBox:vb, xmlns:'http://www.w3.org/2000/svg' };
-
+// ═══════════════════════════════════════════════════════════════════════
+function NoteSVG({ type, size=64, color='#1a1a1a' }) {
+  const c = color;
+  const p = { width:size, height:size, viewBox:'0 0 60 70', xmlns:'http://www.w3.org/2000/svg' };
   switch(type) {
     case 'whole':
-      return <svg {...props}><ellipse cx="30" cy="46" rx="17" ry="10" fill="none" stroke={c} strokeWidth="3"/><ellipse cx="30" cy="46" rx="10" ry="4" fill={c} opacity="0"/></svg>;
+      return <svg {...p}><ellipse cx="30" cy="46" rx="17" ry="10" fill="none" stroke={c} strokeWidth="3"/></svg>;
     case 'half':
-      return <svg {...props}>
+      return <svg {...p}>
         <ellipse cx="23" cy="49" rx="14" ry="9" transform="rotate(-18 23 49)" fill="none" stroke={c} strokeWidth="2.8"/>
         <line x1="36" y1="45" x2="36" y2="10" stroke={c} strokeWidth="2.8"/>
       </svg>;
     case 'quarter':
-      return <svg {...props}>
+      return <svg {...p}>
         <ellipse cx="23" cy="49" rx="14" ry="9" transform="rotate(-18 23 49)" fill={c}/>
         <line x1="36" y1="45" x2="36" y2="10" stroke={c} strokeWidth="2.8"/>
       </svg>;
     case 'eighth':
-      return <svg {...props}>
+      return <svg {...p}>
         <ellipse cx="21" cy="50" rx="13" ry="8" transform="rotate(-18 21 50)" fill={c}/>
         <line x1="33" y1="46" x2="33" y2="10" stroke={c} strokeWidth="2.8"/>
         <path d="M33 10 Q50 18 44 30" stroke={c} strokeWidth="2.8" fill="none" strokeLinecap="round"/>
       </svg>;
     case 'sixteenth':
-      return <svg {...props}>
+      return <svg {...p}>
         <ellipse cx="20" cy="51" rx="13" ry="8" transform="rotate(-18 20 51)" fill={c}/>
         <line x1="32" y1="47" x2="32" y2="8" stroke={c} strokeWidth="2.8"/>
         <path d="M32 8 Q49 16 43 28" stroke={c} strokeWidth="2.8" fill="none" strokeLinecap="round"/>
         <path d="M32 18 Q49 26 43 38" stroke={c} strokeWidth="2.8" fill="none" strokeLinecap="round"/>
       </svg>;
     case 'qrest':
-      return <svg {...props}>
-        <path d="M26 14 Q36 14 28 24 Q38 28 25 38 L30 42 Q18 50 28 60" stroke={c} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+      return <svg {...p}>
+        <path d="M26 14 Q36 14 28 24 Q38 28 25 38 L30 42 Q18 50 28 60"
+          stroke={c} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>;
     case 'erest':
-      return <svg {...props}>
+      return <svg {...p}>
         <circle cx="32" cy="30" r="5" fill={c}/>
         <line x1="35" y1="27" x2="20" y2="50" stroke={c} strokeWidth="2.8" strokeLinecap="round"/>
       </svg>;
-    default:
-      return <svg {...props}/>;
+    default: return <svg {...p}/>;
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// STAFF LINES (5 lines, like a real staff)
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// STAFF + CARD COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════
 function Staff() {
   return (
     <div style={{width:'88%',display:'flex',flexDirection:'column',gap:7,margin:'2px 0 4px'}}>
-      {[0,1,2,3,4].map(i=>(
-        <div key={i} style={{height:1.5,background:'#ccc',borderRadius:1}}/>
-      ))}
+      {[0,1,2,3,4].map(i=><div key={i} style={{height:1.5,background:'#ccc',borderRadius:1}}/>)}
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// SINGLE FLASHCARD — faithful to the physical tarjetero
-// ═══════════════════════════════════════════════════════════════
-function RhythmCard({ figure, isActive, beatNum, totalBeats }) {
+// A BEAT SLOT groups all figures that fit within one denominator beat.
+// figures: array of figure objects for this beat slot
+// isActive: this is the currently playing beat
+// beatNum: 1-based position in measure
+// isAccent: first beat of measure
+function BeatCard({ figures, isActive, beatNum, isAccent }) {
+  // Label: join all figure labels if multiple (sub-beat grouping)
+  const hasMultiple = figures.length > 1;
+  const label = hasMultiple
+    ? figures.map(f => f.label).join(' + ')
+    : (figures[0]?.label || '');
+
+  // Show sub-division marks (×) below the note
+  const totalSubBeats = figures.reduce((a, f) => a + (1 / f.beats), 0);
+
   return (
-    <div className={`r-card${isActive?' r-card--active':''}`}>
-      {/* Hole punch at top */}
+    <div className={`r-card${isActive ? ' r-card--active' : ''}${isAccent ? ' r-card--accent' : ''}`}>
       <div className="r-card__hole"/>
-      {/* Staff */}
       <Staff/>
-      {/* Note */}
       <div className="r-card__note">
-        <NoteSVG type={figure.svg} size={58} color="#1a1a1a" highlight={isActive}/>
+        {hasMultiple ? (
+          // Two figures side by side on same beat
+          <div style={{display:'flex', gap:2, alignItems:'flex-end', justifyContent:'center'}}>
+            {figures.map((f,i) => (
+              <NoteSVG key={i} type={f.svg} size={hasMultiple ? 40 : 56} color="#1a1a1a"/>
+            ))}
+          </div>
+        ) : (
+          <NoteSVG type={figures[0]?.svg || 'quarter'} size={56} color="#1a1a1a"/>
+        )}
       </div>
-      {/* Label */}
-      <div className="r-card__label">{figure.label}</div>
-      {/* Beat position indicator — X marks like the physical card */}
+      <div className="r-card__label">{label}</div>
+      {/* subdivision dots like the physical card */}
       <div className="r-card__beat-row">
-        {Array.from({length:Math.ceil(figure.beats)}).map((_,i)=>(
-          <span key={i} className="r-card__x">×</span>
-        ))}
+        {figures.map((_,i) => <span key={i} className="r-card__x">×</span>)}
       </div>
-      {/* Dot strip (like the orange dot strip on the physical cards) */}
       <div className="r-card__dot-strip">
-        {Array.from({length:Math.ceil(figure.beats)}).map((_,i)=>(
-          <div key={i} className={`r-card__dot${isActive?' r-card__dot--on':''}`}/>
+        {figures.map((_,i) => (
+          <div key={i} className={`r-card__dot${isActive ? ' r-card__dot--on' : ''}`}/>
         ))}
       </div>
-      {/* Beat number badge */}
-      <div className="r-card__badge">{beatNum}</div>
+      <div className={`r-card__badge${isAccent ? ' r-card__badge--accent' : ''}`}>{beatNum}</div>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// RING component
-// ═══════════════════════════════════════════════════════════════
 function Ring() {
   return (
     <div style={{
-      width:38,height:38,
+      width:38, height:38,
       border:'5px solid var(--ring)',
       borderRadius:'50%',
       boxShadow:'inset 0 3px 6px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3)',
@@ -135,20 +135,14 @@ function Ring() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// THE BINDER — physical tarjetero look
-// ═══════════════════════════════════════════════════════════════
-function Binder({ cards, activeIndex }) {
-  const ringCount = cards.length + 1;
+function Binder({ beatSlots, activeCard }) {
+  const ringCount = beatSlots.length + 1;
   return (
     <div className="binder">
-      {/* Rings row */}
       <div className="binder__rings">
-        {Array.from({length:ringCount}).map((_,i)=><Ring key={i}/>)}
+        {Array.from({length: ringCount}).map((_,i) => <Ring key={i}/>)}
       </div>
-      {/* Dark body */}
       <div className="binder__body">
-        {/* Decorative heartbeat line */}
         <div className="binder__deco">
           <svg viewBox="0 0 200 24" width="160" height="20" style={{opacity:.5}}>
             <polyline points="0,12 30,12 40,2 50,22 60,12 80,12 90,6 100,18 110,12 200,12"
@@ -156,38 +150,84 @@ function Binder({ cards, activeIndex }) {
           </svg>
           <span style={{fontFamily:'var(--font-display)',fontStyle:'italic',color:'#f5c518',fontSize:'0.95rem',letterSpacing:2}}>Rhythm</span>
         </div>
-        {/* Cards */}
         <div className="binder__cards">
-          {cards.map((fig, i) => (
-            <RhythmCard
+          {beatSlots.map((slot, i) => (
+            <BeatCard
               key={i}
-              figure={fig}
-              isActive={i === activeIndex}
-              beatNum={i+1}
-              totalBeats={cards.length}
+              figures={slot.figures}
+              isActive={i === activeCard}
+              beatNum={i + 1}
+              isAccent={i === 0}
             />
           ))}
         </div>
       </div>
-      {/* Stand triangle shadow */}
       <div className="binder__stand"/>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// AUDIO ENGINE
-// Uses Web Audio API with precise scheduling
-// - Metronome: click on every beat (accent on beat 1)
-// - Snare: fires according to the figure's subdivision timing
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// BUILD BEAT SLOTS
+// Converts a flat pattern of figure IDs into BEAT SLOTS.
+// Each slot = one denominator beat. Figures smaller than one beat
+// are grouped into the same slot.
+// Returns array of: { figures: [...], snareOffsets: [seconds from slot start] }
+// ═══════════════════════════════════════════════════════════════════════
+function buildBeatSlots(pattern, numerator, denominator) {
+  // beat unit in quarter-note space
+  const beatUnit = 4 / denominator; // e.g. denom=4 → beatUnit=1 quarter
+
+  const slots = Array.from({length: numerator}, () => ({
+    figures: [],
+    snareOffsets: [],  // seconds offsets within the beat slot (filled later with actual timing)
+    snareCount: 0,     // how many snare hits in this beat
+  }));
+
+  let cursor = 0; // in beat units (denominator beats)
+
+  for (const figId of pattern) {
+    const fig = FIGURES[figId];
+    if (!fig) continue;
+    const figBeatsInDenom = fig.beats / beatUnit; // duration in denominator beats
+
+    const slotIdx = Math.floor(cursor);
+    if (slotIdx >= numerator) break;
+
+    const slot = slots[slotIdx];
+    slot.figures.push(fig);
+
+    // Snare hits within this figure
+    const isRest = figId.includes('rest');
+    if (!isRest) {
+      let hitCount = 1;
+      if (figId === 'eighth')    hitCount = 2;
+      if (figId === 'sixteenth') hitCount = 4;
+      // fractional offset within the beat slot (0..1) for each hit
+      const figStartInSlot = cursor - slotIdx; // 0..1
+      for (let h = 0; h < hitCount; h++) {
+        // offset as fraction of one beat slot
+        slot.snareOffsets.push(figStartInSlot + (h / hitCount) * figBeatsInDenom);
+      }
+      slot.snareCount += hitCount;
+    }
+
+    cursor += figBeatsInDenom;
+  }
+
+  return slots;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// AUDIO ENGINE  — Web Audio API with look-ahead event scheduling
+// Uses absolute time events queued ahead; perfectly seamless repeats.
+// ═══════════════════════════════════════════════════════════════════════
 function useAudioEngine() {
   const ctxRef = useRef(null);
 
   function getCtx() {
-    if (!ctxRef.current) {
+    if (!ctxRef.current)
       ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-    }
     return ctxRef.current;
   }
 
@@ -196,130 +236,64 @@ function useAudioEngine() {
     if (ctx.state === 'suspended') ctx.resume();
   }, []);
 
-  const now = useCallback(() => {
+  const audioNow = useCallback(() => {
     const ctx = getCtx();
     if (ctx.state === 'suspended') ctx.resume();
     return ctx.currentTime;
   }, []);
 
-  // Single metronome click
-  const click = useCallback((t, accent=false) => {
+  const playClick = useCallback((t, accent = false) => {
     const ctx = getCtx();
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     osc.connect(g); g.connect(ctx.destination);
     osc.type = 'sine';
-    osc.frequency.value = accent ? 1400 : 900;
-    g.gain.setValueAtTime(accent ? 0.5 : 0.3, t);
+    osc.frequency.value = accent ? 1500 : 900;
+    g.gain.setValueAtTime(accent ? 0.55 : 0.3, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-    osc.start(t); osc.stop(t + 0.06);
+    osc.start(t); osc.stop(t + 0.07);
   }, []);
 
-  // Snare (noise burst)
-  const snare = useCallback((t, vol=0.6) => {
+  const playSnare = useCallback((t, vol = 0.6) => {
     const ctx = getCtx();
-    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.12, ctx.sampleRate);
+    const len = Math.floor(ctx.sampleRate * 0.13);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     const src = ctx.createBufferSource();
     src.buffer = buf;
     const filt = ctx.createBiquadFilter();
-    filt.type = 'bandpass'; filt.frequency.value = 2000; filt.Q.value = 0.6;
+    filt.type = 'bandpass'; filt.frequency.value = 2200; filt.Q.value = 0.5;
     const g = ctx.createGain();
     g.gain.setValueAtTime(vol, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
     src.connect(filt); filt.connect(g); g.connect(ctx.destination);
-    src.start(t); src.stop(t + 0.14);
+    src.start(t); src.stop(t + 0.15);
   }, []);
 
-  return { resume, now, click, snare };
+  return { resume, audioNow, playClick, playSnare };
 }
 
-// ═══════════════════════════════════════════════════════════════
-// EXERCISE PRESETS
-// "pattern" = array of figure ids that fill the measure
-// length MUST equal numerator (one figure per beat slot)
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
+// PRESETS — pattern = flat list of figure ids whose durations sum to
+// exactly numerator beats (in denominator units)
+// ═══════════════════════════════════════════════════════════════════════
 const PRESETS = [
-  { name:'Negras básicas',    meter:[4,4], pattern:['quarter','quarter','quarter','quarter'] },
-  { name:'Negras y corcheas', meter:[4,4], pattern:['quarter','eighth','quarter','eighth'] },
-  { name:'Vals simple',       meter:[3,4], pattern:['quarter','quarter','quarter'] },
-  { name:'Vals con corcheas', meter:[3,4], pattern:['quarter','eighth','eighth'] },
-  { name:'Con semicorcheas',  meter:[4,4], pattern:['quarter','sixteenth','quarter','eighth'] },
-  { name:'Con silencios',     meter:[4,4], pattern:['quarter','quarter_rest','quarter','quarter_rest'] },
-  { name:'Blancas',           meter:[4,4], pattern:['half','half'] },
-  { name:'Binario simple',    meter:[2,4], pattern:['quarter','quarter'] },
-  { name:'Personalizado',     meter:[4,4], pattern:[] },
+  { name:'Negras básicas',     meter:[4,4], pattern:['quarter','quarter','quarter','quarter'] },
+  { name:'Negras y corcheas',  meter:[4,4], pattern:['quarter','eighth','eighth','quarter','eighth','eighth'] },
+  { name:'Vals simple',        meter:[3,4], pattern:['quarter','quarter','quarter'] },
+  { name:'Vals con corcheas',  meter:[3,4], pattern:['quarter','eighth','eighth','quarter'] },
+  { name:'Con semicorcheas',   meter:[4,4], pattern:['quarter','sixteenth','sixteenth','sixteenth','sixteenth','quarter','eighth','eighth'] },
+  { name:'Con silencios',      meter:[4,4], pattern:['quarter','quarter_rest','quarter','quarter_rest'] },
+  { name:'Blancas',            meter:[4,4], pattern:['half','half'] },
+  { name:'Binario simple',     meter:[2,4], pattern:['quarter','quarter'] },
+  { name:'Síncopa',            meter:[4,4], pattern:['eighth','eighth','quarter','eighth','eighth','quarter'] },
+  { name:'Personalizado',      meter:[4,4], pattern:[] },
 ];
 
-// ═══════════════════════════════════════════════════════════════
-// BUILD TIMELINE
-// Given a pattern (array of figure ids) and bpm/meter,
-// returns an array of scheduled events: { time, cardIndex, isSnare, isAccent }
-// The timeline represents ONE full measure, then repeats.
-// ═══════════════════════════════════════════════════════════════
-function buildTimeline(pattern, numerator, denominator, bpm) {
-  // duration of one beat (quarter note) in seconds
-  const quarterDur = 60 / bpm;
-  // duration of one denominator note
-  const beatDur = quarterDur * (4 / denominator);
-
-  const events = []; // { offsetSec, cardIndex, type: 'metro'|'snare', isAccent }
-  let cursor = 0; // in beat units (denominator beats)
-
-  pattern.forEach((figId, cardIdx) => {
-    const fig = FIGURES[figId];
-    if (!fig) return;
-    const figBeats = fig.beats / (4 / denominator); // duration in denominator beats
-
-    // Metro events: one per denominator beat covered by this figure
-    for (let b = 0; b < figBeats && (cursor + b) < numerator; b++) {
-      const isAccent = (cursor + b) === 0;
-      events.push({
-        offsetSec: (cursor + b) * beatDur,
-        cardIndex: cardIdx,
-        type: 'metro',
-        isAccent,
-        figId,
-      });
-    }
-
-    // Snare events: depend on the figure
-    // - whole: 1 hit at start
-    // - half:  1 hit at start
-    // - quarter: 1 hit at start
-    // - eighth: 2 hits (start + halfway through its beat)
-    // - sixteenth: 4 hits (start + every quarter of its beat)
-    // - rests: no snare
-    const isRest = figId.includes('rest');
-    if (!isRest) {
-      const figDurSec = figBeats * beatDur;
-      let hitCount = 1;
-      if (figId === 'eighth')     hitCount = 2;
-      if (figId === 'sixteenth')  hitCount = 4;
-      const interval = figDurSec / hitCount;
-      for (let h = 0; h < hitCount; h++) {
-        events.push({
-          offsetSec: cursor * beatDur + h * interval,
-          cardIndex: cardIdx,
-          type: 'snare',
-          isAccent: h === 0 && cursor === 0,
-          figId,
-        });
-      }
-    }
-
-    cursor += figBeats;
-  });
-
-  // Total measure duration
-  const measureDur = numerator * beatDur;
-  return { events, measureDur };
-}
-
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
 // MAIN APP
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════
 export default function App() {
   const [screen, setScreen] = useState('config');
   const [tempo, setTempo] = useState(80);
@@ -330,103 +304,142 @@ export default function App() {
   const [metronomeOn, setMetronomeOn] = useState(true);
   const [snareOn, setSnareOn] = useState(false);
 
-  // Play state
+  // Visual playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeCard, setActiveCard] = useState(-1);
-  const [activeBeat, setActiveBeat] = useState(-1); // metro beat index
+  const [activeBeat, setActiveBeat] = useState(-1); // 0-based beat within measure
 
-  const { resume, now, click, snare } = useAudioEngine();
-  const rafRef = useRef(null);
-  const startTimeRef = useRef(0);
-  const timelineRef = useRef(null);
-  const scheduledUpToRef = useRef(0);
-  const lookahead = 0.12;
+  const { resume, audioNow, playClick, playSnare } = useAudioEngine();
 
-  // Derive active pattern
+  // Scheduler refs — never trigger re-renders
+  const schedulerTimerRef = useRef(null);
+  const nextBeatTimeRef = useRef(0);   // absolute audio time of next beat to schedule
+  const nextBeatIdxRef = useRef(0);    // global beat counter (0, 1, 2 ... ∞)
+  const slotsRef = useRef([]);
+  const beatDurRef = useRef(0);
+  const metroRef = useRef(true);
+  const snareRef = useRef(false);
+  const numRef = useRef(4);
+
+  // Keep refs in sync with state (so scheduler closure always reads latest)
+  useEffect(() => { metroRef.current = metronomeOn; }, [metronomeOn]);
+  useEffect(() => { snareRef.current = snareOn; }, [snareOn]);
+  useEffect(() => { numRef.current = numerator; }, [numerator]);
+
+  // Active pattern (flat list of figure ids)
   const activePattern = useMemo(() => {
     if (presetIdx === PRESETS.length - 1) return customPattern;
-    const p = PRESETS[presetIdx];
-    return p.pattern;
+    return PRESETS[presetIdx].pattern;
   }, [presetIdx, customPattern]);
 
-  // Recompute timeline whenever relevant params change
-  const timeline = useMemo(() => {
-    if (activePattern.length === 0) return null;
-    return buildTimeline(activePattern, numerator, denominator, tempo);
-  }, [activePattern, numerator, denominator, tempo]);
+  // Beat slots derived from pattern
+  const beatSlots = useMemo(() => {
+    if (activePattern.length === 0) return [];
+    return buildBeatSlots(activePattern, numerator, denominator);
+  }, [activePattern, numerator, denominator]);
 
-  // ── Scheduler loop ───────────────────────────────────────────
-  const scheduleLoop = useCallback(() => {
-    if (!timelineRef.current) return;
-    const { events, measureDur } = timelineRef.current;
-    const ctx_now = now();
-    const scheduleUntil = ctx_now + lookahead;
+  // ── Core scheduler ────────────────────────────────────────────
+  // Schedules audio events AHEAD in time. Called every ~25ms.
+  // Perfectly continuous: just increments absolute time per beat.
+  const LOOKAHEAD = 0.15; // seconds to schedule ahead
+  const INTERVAL  = 25;   // ms between scheduler calls
 
-    while (scheduledUpToRef.current < scheduleUntil) {
-      const t = scheduledUpToRef.current;
-      // Find measure offset
-      const elapsed = t - startTimeRef.current;
-      const measureOffset = elapsed % measureDur;
+  const scheduleBeat = useCallback((beatAbsTime, beatIdxInMeasure) => {
+    const slots = slotsRef.current;
+    const beatDur = beatDurRef.current;
+    if (!slots.length || !beatDur) return;
 
-      // Find which events fall in next tiny window (we advance by smallest event gap)
-      const TICK = 0.01;
-      events.forEach(ev => {
-        // Does this event fall within [measureOffset, measureOffset+TICK)?
-        const diff = ev.offsetSec - measureOffset;
-        if (diff >= 0 && diff < TICK) {
-          const eventTime = t + diff;
-          if (ev.type === 'metro' && metronomeOn) {
-            click(eventTime, ev.isAccent);
-          }
-          if (ev.type === 'snare' && snareOn) {
-            snare(eventTime, ev.isAccent ? 0.8 : 0.55);
-          }
-          // Visual update
-          const delay = (eventTime - ctx_now) * 1000;
-          if (ev.type === 'metro') {
-            const capturedCard = ev.cardIndex;
-            const capturedBeat = Math.round(ev.offsetSec / (timelineRef.current.measureDur / numerator));
-            setTimeout(() => {
-              setActiveCard(capturedCard);
-              setActiveBeat(capturedBeat);
-            }, Math.max(0, delay));
-          }
-        }
-      });
+    const slot = slots[beatIdxInMeasure];
+    if (!slot) return;
 
-      scheduledUpToRef.current += TICK;
+    const isAccent = beatIdxInMeasure === 0;
+
+    // Metronome click on every beat
+    if (metroRef.current) {
+      playClick(beatAbsTime, isAccent);
     }
 
-    rafRef.current = requestAnimationFrame(scheduleLoop);
-  }, [now, click, snare, metronomeOn, snareOn, numerator]);
-
-  useEffect(() => {
-    if (isPlaying && timeline) {
-      resume();
-      timelineRef.current = timeline;
-      startTimeRef.current = now() + 0.05;
-      scheduledUpToRef.current = startTimeRef.current;
-      setActiveCard(0);
-      setActiveBeat(0);
-      rafRef.current = requestAnimationFrame(scheduleLoop);
-    } else {
-      cancelAnimationFrame(rafRef.current);
-      if (!isPlaying) {
-        setActiveCard(-1);
-        setActiveBeat(-1);
+    // Snare hits according to sub-beat offsets
+    if (snareRef.current && slot.snareOffsets.length > 0) {
+      for (const frac of slot.snareOffsets) {
+        const hitTime = beatAbsTime + frac * beatDur;
+        playSnare(hitTime, isAccent && frac === 0 ? 0.8 : 0.55);
       }
     }
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [isPlaying, timeline, scheduleLoop, now, resume]);
 
-  // When playing and params change, update timeline ref on the fly
-  useEffect(() => {
-    if (isPlaying && timeline) {
-      timelineRef.current = timeline;
+    // Schedule visual update via setTimeout aligned to audio time
+    const now = audioNow();
+    const delayMs = Math.max(0, (beatAbsTime - now) * 1000);
+    const capturedIdx = beatIdxInMeasure;
+    setTimeout(() => {
+      setActiveCard(capturedIdx);
+      setActiveBeat(capturedIdx);
+    }, delayMs);
+  }, [playClick, playSnare, audioNow]);
+
+  const runScheduler = useCallback(() => {
+    const now = audioNow();
+    const scheduleUntil = now + LOOKAHEAD;
+
+    while (nextBeatTimeRef.current < scheduleUntil) {
+      const n = numRef.current;
+      const beatInMeasure = nextBeatIdxRef.current % n;
+      scheduleBeat(nextBeatTimeRef.current, beatInMeasure);
+      nextBeatTimeRef.current += beatDurRef.current;
+      nextBeatIdxRef.current += 1;
     }
-  }, [isPlaying, timeline]);
+  }, [audioNow, scheduleBeat]);
 
-  // ── Sync preset meter to state ──────────────────────────────
+  // ── Start / stop ──────────────────────────────────────────────
+  const startPlayback = useCallback((slots, bpm, denom) => {
+    resume();
+    const quarterDur = 60 / bpm;
+    const bd = quarterDur * (4 / denom);
+    slotsRef.current = slots;
+    beatDurRef.current = bd;
+    nextBeatIdxRef.current = 0;
+    nextBeatTimeRef.current = audioNow() + 0.05; // tiny start delay for audio context
+    setActiveCard(0);
+    setActiveBeat(0);
+    // Kick off scheduler
+    if (schedulerTimerRef.current) clearInterval(schedulerTimerRef.current);
+    schedulerTimerRef.current = setInterval(runScheduler, INTERVAL);
+    // Run once immediately so first beats are scheduled right away
+    runScheduler();
+  }, [resume, audioNow, runScheduler]);
+
+  const stopPlayback = useCallback(() => {
+    if (schedulerTimerRef.current) {
+      clearInterval(schedulerTimerRef.current);
+      schedulerTimerRef.current = null;
+    }
+    setActiveCard(-1);
+    setActiveBeat(-1);
+  }, []);
+
+  // Effect: start/stop when isPlaying changes
+  useEffect(() => {
+    if (isPlaying && beatSlots.length > 0) {
+      startPlayback(beatSlots, tempo, denominator);
+    } else if (!isPlaying) {
+      stopPlayback();
+    }
+    return () => stopPlayback();
+    
+  }, [isPlaying]);
+
+  // If tempo/meter/pattern changes while playing, restart seamlessly
+  const prevPlayingRef = useRef(false);
+  useEffect(() => {
+    if (isPlaying && prevPlayingRef.current) {
+      stopPlayback();
+      startPlayback(beatSlots, tempo, denominator);
+    }
+    prevPlayingRef.current = isPlaying;
+  
+  }, [tempo, denominator, numerator, beatSlots]);
+
+  // Sync preset meter to numerator/denominator state
   useEffect(() => {
     if (presetIdx < PRESETS.length - 1) {
       const [n, d] = PRESETS[presetIdx].meter;
@@ -436,43 +449,35 @@ export default function App() {
   }, [presetIdx]);
 
   // ── Custom pattern helpers ──────────────────────────────────
+  const beatUnit = 4 / denominator;
   const customBeatsUsed = customPattern.reduce((a, id) => {
     const f = FIGURES[id];
-    return a + (f ? f.beats / (4/denominator) : 0);
+    return a + (f ? f.beats / beatUnit : 0);
   }, 0);
   const customBeatsRemaining = numerator - customBeatsUsed;
 
   const addToCustom = (figId) => {
     const f = FIGURES[figId];
     if (!f) return;
-    const addedBeats = f.beats / (4/denominator);
-    if (customBeatsUsed + addedBeats > numerator) return;
+    const addedBeats = f.beats / beatUnit;
+    if (customBeatsUsed + addedBeats > numerator + 0.001) return;
     setCustomPattern(prev => [...prev, figId]);
   };
-
-  const removeLastCustom = () => setCustomPattern(prev => prev.slice(0,-1));
+  const removeLastCustom = () => setCustomPattern(prev => prev.slice(0, -1));
   const clearCustom = () => setCustomPattern([]);
 
-  const canStart = activePattern.length > 0;
+  const canStart = beatSlots.length > 0;
 
-  // ── Handlers ────────────────────────────────────────────────
-  const handleStart = () => {
-    if (!canStart) return;
-    setIsPlaying(true);
-    setScreen('play');
-  };
-
+  const handleStart = () => { if (!canStart) return; setIsPlaying(true); setScreen('play'); };
   const handleStop = () => setIsPlaying(false);
   const handleBack = () => { setIsPlaying(false); setScreen('config'); };
   const handleRestart = () => {
-    setIsPlaying(false);
-    setTimeout(() => setIsPlaying(true), 80);
+    stopPlayback();
+    setTimeout(() => {
+      setIsPlaying(true);
+      startPlayback(beatSlots, tempo, denominator);
+    }, 60);
   };
-
-  // ── Derived display ─────────────────────────────────────────
-  const displayPattern = useMemo(() => {
-    return activePattern.map(id => FIGURES[id] || FIGURES.quarter);
-  }, [activePattern]);
 
   // ════════════════════════════════════════════════════════════
   // CONFIG SCREEN
@@ -499,11 +504,8 @@ export default function App() {
               <span className="tempo-num">{tempo}</span>
               <span className="tempo-unit">BPM</span>
             </div>
-            <div className="tempo-marks">
-              <span>Lento</span><span>Moderato</span><span>Presto</span>
-            </div>
-            <input type="range" min="40" max="220" value={tempo}
-              onChange={e=>setTempo(+e.target.value)}/>
+            <div className="tempo-marks"><span>Lento</span><span>Moderato</span><span>Presto</span></div>
+            <input type="range" min="40" max="220" value={tempo} onChange={e=>setTempo(+e.target.value)}/>
             <div className="tempo-presets">
               {[60,76,92,108,120,144].map(t=>(
                 <button key={t} className={`tpreset${tempo===t?' tpreset--on':''}`}
@@ -524,7 +526,7 @@ export default function App() {
                 <div className="meter-picker-row">
                   {[2,3,4,5,6,7].map(n=>(
                     <button key={n} className={`mpick${numerator===n?' mpick--on':''}`}
-                      onClick={()=>{setNumerator(n);if(presetIdx!==PRESETS.length-1)setPresetIdx(PRESETS.length-1)}}>{n}</button>
+                      onClick={()=>{setNumerator(n);setPresetIdx(PRESETS.length-1)}}>{n}</button>
                   ))}
                 </div>
               </div>
@@ -533,16 +535,16 @@ export default function App() {
                 <div className="meter-picker-row">
                   {[2,4,8].map(d=>(
                     <button key={d} className={`mpick${denominator===d?' mpick--on':''}`}
-                      onClick={()=>{setDenominator(d);if(presetIdx!==PRESETS.length-1)setPresetIdx(PRESETS.length-1)}}>{d}</button>
+                      onClick={()=>{setDenominator(d);setPresetIdx(PRESETS.length-1)}}>{d}</button>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-          <p className="cfg-hint">El compás tendrá <strong>{numerator}</strong> tarjetas — una por pulso.</p>
+          <p className="cfg-hint">El compás tendrá <strong>{numerator}</strong> tarjetas — una por pulso del denominador.</p>
         </section>
 
-        {/* EXERCISE */}
+        {/* EXERCISES */}
         <section className="cfg-card">
           <h2 className="cfg-card__title">Ejercicio</h2>
           <div className="preset-grid">
@@ -551,13 +553,11 @@ export default function App() {
                 className={`preset-tile${presetIdx===i?' preset-tile--on':''}`}
                 onClick={()=>setPresetIdx(i)}>
                 <span className="pt-name">{p.name}</span>
-                {i<PRESETS.length-1 && (
-                  <span className="pt-meter">{p.meter[0]}/{p.meter[1]}</span>
-                )}
+                {i<PRESETS.length-1 && <span className="pt-meter">{p.meter[0]}/{p.meter[1]}</span>}
                 {i<PRESETS.length-1 && (
                   <div className="pt-notes">
-                    {p.pattern.map((id,j)=>(
-                      <NoteSVG key={j} type={FIGURES[id]?.svg||'quarter'} size={22} color="#888"/>
+                    {p.pattern.slice(0,5).map((id,j)=>(
+                      <NoteSVG key={j} type={FIGURES[id]?.svg||'quarter'} size={20} color="#999"/>
                     ))}
                   </div>
                 )}
@@ -572,8 +572,8 @@ export default function App() {
             <h2 className="cfg-card__title">
               Constructor &nbsp;
               <span className="cfg-hint-inline">
-                {numerator - customBeatsUsed > 0
-                  ? `Faltan ${+(customBeatsRemaining).toFixed(2)} pulsos`
+                {customBeatsRemaining > 0.001
+                  ? `Faltan ${parseFloat(customBeatsRemaining.toFixed(3))} pulsos`
                   : '¡Compás completo!'}
               </span>
             </h2>
@@ -583,15 +583,16 @@ export default function App() {
                 <div className="palette-row">
                   {grp.items.map(id=>{
                     const f = FIGURES[id];
-                    const wouldAdd = f.beats/(4/denominator);
-                    const disabled = wouldAdd > customBeatsRemaining + 0.001;
+                    const w = f.beats / beatUnit;
+                    const disabled = w > customBeatsRemaining + 0.001;
                     return (
                       <button key={id}
                         className={`pal-btn${disabled?' pal-btn--dis':''}`}
                         disabled={disabled}
                         onClick={()=>addToCustom(id)}>
-                        <NoteSVG type={f.svg} size={38} color={disabled?'#bbb':'#1a1a1a'}/>
+                        <NoteSVG type={f.svg} size={36} color={disabled?'#bbb':'#1a1a1a'}/>
                         <span className="pal-label">{f.label}</span>
+                        <span className="pal-beats">{w < 1 ? `1/${Math.round(1/w)}` : w} pulso{w!==1?'s':''}</span>
                       </button>
                     );
                   })}
@@ -602,18 +603,18 @@ export default function App() {
               {customPattern.length===0
                 ? <span className="custom-empty">Añade figuras →</span>
                 : customPattern.map((id,i)=>(
-                    <NoteSVG key={i} type={FIGURES[id]?.svg||'quarter'} size={46} color="#1a1a1a"/>
+                    <NoteSVG key={i} type={FIGURES[id]?.svg||'quarter'} size={44} color="#1a1a1a"/>
                   ))
               }
             </div>
             <div className="custom-actions">
-              <button className="cbtn cbtn--del" onClick={removeLastCustom} disabled={customPattern.length===0}>⌫ Quitar</button>
-              <button className="cbtn cbtn--clr" onClick={clearCustom} disabled={customPattern.length===0}>✕ Limpiar</button>
+              <button className="cbtn cbtn--del" onClick={removeLastCustom} disabled={!customPattern.length}>⌫ Quitar</button>
+              <button className="cbtn cbtn--clr" onClick={clearCustom} disabled={!customPattern.length}>✕ Limpiar</button>
             </div>
           </section>
         )}
 
-        {/* SOUND OPTIONS */}
+        {/* SOUND */}
         <section className="cfg-card cfg-card--row">
           <h2 className="cfg-card__title" style={{marginBottom:0}}>Sonido</h2>
           <div className="sound-opts">
@@ -631,7 +632,6 @@ export default function App() {
         <button className="start-btn" onClick={handleStart} disabled={!canStart}>
           ▶ &nbsp;Iniciar práctica
         </button>
-
       </main>
     </div>
   );
@@ -641,7 +641,6 @@ export default function App() {
   // ════════════════════════════════════════════════════════════
   return (
     <div className="app play-app">
-      {/* Top bar */}
       <header className="play-bar">
         <button className="play-back" onClick={handleBack}>← Configurar</button>
         <div className="play-bar__info">
@@ -650,15 +649,14 @@ export default function App() {
         </div>
         <div className="play-bar__opts">
           <button className={`play-opt${metronomeOn?' play-opt--on':''}`}
-            onClick={()=>setMetronomeOn(v=>!v)}>🎵</button>
+            onClick={()=>setMetronomeOn(v=>!v)} title="Metrónomo">🎵</button>
           <button className={`play-opt${snareOn?' play-opt--on':''}`}
-            onClick={()=>setSnareOn(v=>!v)}>🥁</button>
+            onClick={()=>setSnareOn(v=>!v)} title="Redoblante">🥁</button>
         </div>
       </header>
 
       <main className="play-main">
-
-        {/* Beat indicator row */}
+        {/* Beat pips */}
         <div className="beat-row">
           {Array.from({length:numerator}).map((_,i)=>(
             <div key={i}
@@ -669,50 +667,47 @@ export default function App() {
         </div>
 
         {/* THE BINDER */}
-        <Binder cards={displayPattern} activeIndex={activeCard}/>
+        <Binder beatSlots={beatSlots} activeCard={activeCard}/>
 
-        {/* Active figure info */}
+        {/* Active slot info */}
         <div className="play-figinfo">
-          {activeCard >= 0 && activeCard < displayPattern.length && (
-            <>
-              <span className="pfi-label">Figura activa:</span>
-              <span className="pfi-name">{displayPattern[activeCard]?.label}</span>
-              <span className="pfi-beats">
-                {displayPattern[activeCard]?.beats} {displayPattern[activeCard]?.beats===1?'tiempo':'tiempos'}
-              </span>
-            </>
-          )}
+          {activeCard >= 0 && activeCard < beatSlots.length && (() => {
+            const slot = beatSlots[activeCard];
+            const label = slot.figures.map(f=>f.label).join(' + ');
+            return <>
+              <span className="pfi-label">Pulso {activeCard+1}:</span>
+              <span className="pfi-name">{label}</span>
+              {slot.snareCount > 1 && (
+                <span className="pfi-beats">{slot.snareCount} subdivisiones</span>
+              )}
+            </>;
+          })()}
         </div>
 
         {/* Controls */}
         <div className="play-controls">
           {isPlaying
             ? <button className="ctrl-btn ctrl-btn--stop" onClick={handleStop}>⏹ Parar</button>
-            : <button className="ctrl-btn ctrl-btn--play" onClick={()=>setIsPlaying(true)}>▶ Continuar</button>
+            : <button className="ctrl-btn ctrl-btn--play" onClick={()=>{ setIsPlaying(true); startPlayback(beatSlots, tempo, denominator); }}>▶ Continuar</button>
           }
           <button className="ctrl-btn ctrl-btn--restart" onClick={handleRestart}>↺ Reiniciar</button>
         </div>
-
       </main>
     </div>
   );
 }
 
-// ── Toggle component ────────────────────────────────────────────
 function Toggle({on, onChange}) {
   return (
     <div onClick={()=>onChange(v=>!v)} style={{
       width:50,height:27,borderRadius:14,
       background:on?'#1a1a1a':'#ccc',
-      position:'relative',cursor:'pointer',
-      transition:'background .2s',flexShrink:0,
+      position:'relative',cursor:'pointer',transition:'background .2s',flexShrink:0,
     }}>
       <div style={{
         position:'absolute',top:3,left:on?23:3,
         width:21,height:21,borderRadius:'50%',
-        background:'#fff',
-        boxShadow:'0 2px 5px rgba(0,0,0,.3)',
-        transition:'left .2s',
+        background:'#fff',boxShadow:'0 2px 5px rgba(0,0,0,.3)',transition:'left .2s',
       }}/>
     </div>
   );

@@ -470,7 +470,7 @@
   position: absolute;
   top: 7px; right: 7px;
   width: 18px; height: 18px;
-  background: var(--accent);
+  background: #ddd;
   border-radius: 50%;
   font-size: 0.6rem;
   font-family: var(--font-mono);
@@ -479,6 +479,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+.r-card__badge--accent {
+  background: var(--accent2);
+  color: #fff;
+}
+/* Accent card (beat 1) — subtle left gold border */
+.r-card--accent {
+  border-left: 3px solid var(--accent);
+}
+.r-card--accent .r-card__badge {
+  background: #e84040;
+  color: #fff;
+}
+/* pal-beats label */
+.pal-beats {
+  font-size: 0.58rem;
+  color: #aaa;
+  margin-top: 1px;
 }
 
 /* ─── Responsive ────────────────────────────────────────────── */
