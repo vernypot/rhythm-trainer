@@ -197,16 +197,23 @@ function buildBeatSlots(pattern, numerator, denominator) {
     const slot = slots[slotIdx];
     slot.figures.push(fig);
 
-    // Snare hits within this figure
+    // Snare hits — number of hits is relative to the DENOMINATOR as pulse unit.
+    // figBeatsInDenom < 1 → figure is smaller than one beat → subdivide
+    // figBeatsInDenom >= 1 → one hit at start only (metronome covers remaining beats)
+    // Examples:
+    //   Denominator=4 (quarter = 1 beat):
+    //     quarter → 1 hit, eighth → 2 hits, sixteenth → 4 hits
+    //   Denominator=8 (eighth = 1 beat):
+    //     eighth → 1 hit, sixteenth → 2 hits, quarter → 1 hit (spans >1 beat)
+    //   Denominator=2 (half = 1 beat):
+    //     half → 1 hit, quarter → 1 hit (0.5 beat but rounds to 2... no: 1/0.5=2)
     const isRest = figId.includes('rest');
     if (!isRest) {
-      let hitCount = 1;
-      if (figId === 'eighth')    hitCount = 2;
-      if (figId === 'sixteenth') hitCount = 4;
-      // fractional offset within the beat slot (0..1) for each hit
-      const figStartInSlot = cursor - slotIdx; // 0..1
+      const hitCount = figBeatsInDenom < 1
+        ? Math.round(1 / figBeatsInDenom)
+        : 1;
+      const figStartInSlot = cursor - slotIdx; // fractional start within the slot (0..1)
       for (let h = 0; h < hitCount; h++) {
-        // offset as fraction of one beat slot
         slot.snareOffsets.push(figStartInSlot + (h / hitCount) * figBeatsInDenom);
       }
       slot.snareCount += hitCount;
@@ -288,6 +295,9 @@ const PRESETS = [
   { name:'Blancas',            meter:[4,4], pattern:['half','half'] },
   { name:'Binario simple',     meter:[2,4], pattern:['quarter','quarter'] },
   { name:'Síncopa',            meter:[4,4], pattern:['eighth','eighth','quarter','eighth','eighth','quarter'] },
+  // 6/8: denominator=8 → eighth note is ONE beat. Pattern must fill 6 eighth-note beats.
+  { name:'6/8 básico',         meter:[6,8], pattern:['eighth','eighth','eighth','eighth','eighth','eighth'] },
+  { name:'6/8 con semicorcheas', meter:[6,8], pattern:['eighth','eighth','eighth','sixteenth','sixteenth','eighth','eighth','eighth'] },
   { name:'Personalizado',      meter:[4,4], pattern:[] },
 ];
 
