@@ -2,21 +2,41 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import './App.css';
 
 // ═══════════════════════════════════════════════════════════════════════
-// FIGURES — values in quarter-note units
+// FIGURES — value (val) expressed as fraction of a WHOLE NOTE (redonda = 1)
+//   Denominador table:
+//     1 → redonda  (val = 1)
+//     2 → blanca   (val = 1/2)
+//     4 → negra    (val = 1/4)
+//     8 → corchea  (val = 1/8)
+//    16 → semicorchea (val = 1/16)
+//
+// Duration in denominator beats = fig.val * denominator
+//   e.g. negra (1/4) in 4/4 → 0.25 * 4 = 1 beat
+//   e.g. corchea (1/8) in 6/8 → 0.125 * 8 = 1 beat
+//   e.g. semicorchea (1/16) in 6/8 → 0.0625 * 8 = 0.5 beats → 2 snare hits
 // ═══════════════════════════════════════════════════════════════════════
 const FIGURES = {
-  whole:        { id:'whole',        label:'Redonda',     beats:4,    svg:'whole'  },
-  half:         { id:'half',         label:'Blanca',      beats:2,    svg:'half'   },
-  quarter:      { id:'quarter',      label:'Negra',       beats:1,    svg:'quarter'},
-  eighth:       { id:'eighth',       label:'Corchea',     beats:0.5,  svg:'eighth' },
-  sixteenth:    { id:'sixteenth',    label:'Semicorchea', beats:0.25, svg:'sixteenth'},
-  quarter_rest: { id:'quarter_rest', label:'Silencio ♩',  beats:1,    svg:'qrest'  },
-  eighth_rest:  { id:'eighth_rest',  label:'Silencio ♪',  beats:0.5,  svg:'erest'  },
+  whole:        { id:'whole',        label:'Redonda',     val:1,      svg:'whole'     },
+  half:         { id:'half',         label:'Blanca',      val:1/2,    svg:'half'      },
+  quarter:      { id:'quarter',      label:'Negra',       val:1/4,    svg:'quarter'   },
+  eighth:       { id:'eighth',       label:'Corchea',     val:1/8,    svg:'eighth'    },
+  sixteenth:    { id:'sixteenth',    label:'Semicorchea', val:1/16,   svg:'sixteenth' },
+  half_rest:    { id:'half_rest',    label:'Silencio ♩½', val:1/2,    svg:'hrest'     },
+  quarter_rest: { id:'quarter_rest', label:'Silencio ♩',  val:1/4,    svg:'qrest'     },
+  eighth_rest:  { id:'eighth_rest',  label:'Silencio ♪',  val:1/8,    svg:'erest'     },
 };
+
+// Duration of ONE denominator beat as fraction of whole note
+// e.g. denom=4 → 1/4; denom=8 → 1/8
+function denomVal(denominator) { return 1 / denominator; }
+
+// How many denominator beats does a figure occupy?
+// = fig.val / denomVal(denom) = fig.val * denominator
+function figBeats(fig, denominator) { return fig.val * denominator; }
 
 const PALETTE_GROUPS = [
   { label:'Figuras',   items:['whole','half','quarter','eighth','sixteenth'] },
-  { label:'Silencios', items:['quarter_rest','eighth_rest'] },
+  { label:'Silencios', items:['half_rest','quarter_rest','eighth_rest'] },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -56,6 +76,11 @@ function NoteSVG({ type, size=64, color='#1a1a1a' }) {
         <path d="M26 14 Q36 14 28 24 Q38 28 25 38 L30 42 Q18 50 28 60"
           stroke={c} strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>;
+    case 'hrest':
+      return <svg {...p}>
+        <rect x="14" y="36" width="32" height="12" fill={c} rx="1"/>
+        <line x1="10" y1="34" x2="50" y2="34" stroke={c} strokeWidth="2"/>
+      </svg>;
     case 'erest':
       return <svg {...p}>
         <circle cx="32" cy="30" r="5" fill={c}/>
@@ -89,8 +114,6 @@ function BeatCard({ figures, isActive, beatNum, isAccent }) {
     : (figures[0]?.label || '');
 
   // Show sub-division marks (×) below the note
-  const totalSubBeats = figures.reduce((a, f) => a + (1 / f.beats), 0);
-
   return (
     <div className={`r-card${isActive ? ' r-card--active' : ''}${isAccent ? ' r-card--accent' : ''}`}>
       <div className="r-card__hole"/>
@@ -175,51 +198,55 @@ function Binder({ beatSlots, activeCard }) {
 // Returns array of: { figures: [...], snareOffsets: [seconds from slot start] }
 // ═══════════════════════════════════════════════════════════════════════
 function buildBeatSlots(pattern, numerator, denominator) {
-  // beat unit in quarter-note space
-  const beatUnit = 4 / denominator; // e.g. denom=4 → beatUnit=1 quarter
+  // All durations computed relative to the whole note (redonda = 1).
+  // One denominator beat = 1/denominator of a whole note.
+  // figBeats(fig, denom) = fig.val * denom  → beats the figure occupies.
 
   const slots = Array.from({length: numerator}, () => ({
     figures: [],
-    snareOffsets: [],  // seconds offsets within the beat slot (filled later with actual timing)
-    snareCount: 0,     // how many snare hits in this beat
+    snareOffsets: [], // fractional offsets within the slot (0..1) for each snare hit
+    snareCount: 0,
   }));
 
-  let cursor = 0; // in beat units (denominator beats)
+  let cursor = 0; // current position in denominator beats (0 .. numerator)
 
   for (const figId of pattern) {
     const fig = FIGURES[figId];
     if (!fig) continue;
-    const figBeatsInDenom = fig.beats / beatUnit; // duration in denominator beats
 
-    const slotIdx = Math.floor(cursor);
+    // How many denominator beats does this figure last?
+    const durBeats = figBeats(fig, denominator); // e.g. negra in 4/4 → 1; corchea in 6/8 → 1; semicorchea in 6/8 → 0.5
+
+    const slotIdx = Math.floor(cursor + 1e-9); // which beat slot
     if (slotIdx >= numerator) break;
 
     const slot = slots[slotIdx];
     slot.figures.push(fig);
 
-    // Snare hits — number of hits is relative to the DENOMINATOR as pulse unit.
-    // figBeatsInDenom < 1 → figure is smaller than one beat → subdivide
-    // figBeatsInDenom >= 1 → one hit at start only (metronome covers remaining beats)
-    // Examples:
-    //   Denominator=4 (quarter = 1 beat):
-    //     quarter → 1 hit, eighth → 2 hits, sixteenth → 4 hits
-    //   Denominator=8 (eighth = 1 beat):
-    //     eighth → 1 hit, sixteenth → 2 hits, quarter → 1 hit (spans >1 beat)
-    //   Denominator=2 (half = 1 beat):
-    //     half → 1 hit, quarter → 1 hit (0.5 beat but rounds to 2... no: 1/0.5=2)
+    // ── Snare hits ──────────────────────────────────────────
+    // The denominator IS the pulse unit. One denominator beat = 1 hit.
+    // Figures that span LESS than one beat are subdivisions → multiple hits.
+    // Figures spanning ONE or MORE beats → 1 hit at start only.
+    //
+    // hitCount = round(1 / durBeats) when durBeats < 1, else 1
+    //
+    // Truth table (denominator → figure → hitCount):
+    //   4 → negra(1)       → 1    | 4 → corchea(0.5)   → 2   | 4 → semicorchea(0.25) → 4
+    //   8 → corchea(1)     → 1    | 8 → semicorchea(0.5)→ 2  | 8 → negra(2)          → 1
+    //   2 → blanca(1)      → 1    | 2 → negra(0.5)     → 2   | 2 → corchea(0.25)     → 4
+    //   1 → redonda(1)     → 1    | 1 → blanca(0.5)    → 2
     const isRest = figId.includes('rest');
     if (!isRest) {
-      const hitCount = figBeatsInDenom < 1
-        ? Math.round(1 / figBeatsInDenom)
-        : 1;
-      const figStartInSlot = cursor - slotIdx; // fractional start within the slot (0..1)
+      const hitCount = durBeats < (1 - 1e-9) ? Math.round(1 / durBeats) : 1;
+      const figStartInSlot = cursor - slotIdx; // position within slot as fraction of one beat
       for (let h = 0; h < hitCount; h++) {
-        slot.snareOffsets.push(figStartInSlot + (h / hitCount) * figBeatsInDenom);
+        // Evenly distribute hits across the figure's duration within the slot
+        slot.snareOffsets.push(figStartInSlot + (h / hitCount) * durBeats);
       }
       slot.snareCount += hitCount;
     }
 
-    cursor += figBeatsInDenom;
+    cursor += durBeats;
   }
 
   return slots;
@@ -403,6 +430,8 @@ export default function App() {
   // ── Start / stop ──────────────────────────────────────────────
   const startPlayback = useCallback((slots, bpm, denom) => {
     resume();
+    // Duration of one denominator beat in seconds:
+    // one beat = (1/denom) whole note = (4/denom) quarter notes = (4/denom) * (60/bpm) seconds
     const quarterDur = 60 / bpm;
     const bd = quarterDur * (4 / denom);
     slotsRef.current = slots;
@@ -459,17 +488,16 @@ export default function App() {
   }, [presetIdx]);
 
   // ── Custom pattern helpers ──────────────────────────────────
-  const beatUnit = 4 / denominator;
   const customBeatsUsed = customPattern.reduce((a, id) => {
     const f = FIGURES[id];
-    return a + (f ? f.beats / beatUnit : 0);
+    return a + (f ? figBeats(f, denominator) : 0);
   }, 0);
   const customBeatsRemaining = numerator - customBeatsUsed;
 
   const addToCustom = (figId) => {
     const f = FIGURES[figId];
     if (!f) return;
-    const addedBeats = f.beats / beatUnit;
+    const addedBeats = figBeats(f, denominator);
     if (customBeatsUsed + addedBeats > numerator + 0.001) return;
     setCustomPattern(prev => [...prev, figId]);
   };
@@ -593,7 +621,7 @@ export default function App() {
                 <div className="palette-row">
                   {grp.items.map(id=>{
                     const f = FIGURES[id];
-                    const w = f.beats / beatUnit;
+                    const w = figBeats(f, denominator);
                     const disabled = w > customBeatsRemaining + 0.001;
                     return (
                       <button key={id}
